@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'django_filters',
     'debug_toolbar',
     'djoser',
-    "reservation.apps.ReservationConfig"
+    'reservations.apps.ReservationConfig',
 ]
 
 MIDDLEWARE = [
