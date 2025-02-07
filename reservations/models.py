@@ -19,33 +19,19 @@ class Table(models.Model):
         return f"Table {self.id} ({self.seats_count} seats)"
 
 
-class Seat(models.Model):
-    table = models.ForeignKey(Table, related_name='seats', on_delete=models.CASCADE)
-    seat_number = models.IntegerField()  # Seat number in the table
-    is_occupied = models.BooleanField(default=False)  # Whether this seat is occupied or not
-    reservation = models.ForeignKey('Reservation', null=True, blank=True, on_delete=models.SET_NULL)
-
-    def __str__(self):
-        return f"Seat {self.seat_number} at Table {self.table.id}"
-
-
 class Reservation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # The user who made the reservations
-    table = models.ForeignKey(Table, related_name='reservations', on_delete=models.CASCADE)  # Reserved table
-    seats_count = models.IntegerField()  # Number of seats reserved (rounded to even number)
-    total_cost = models.DecimalField(max_digits=6, decimal_places=2)  # Total reservations cost
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    table = models.ForeignKey(Table, related_name='reservations', on_delete=models.CASCADE)
+    seats_count = models.IntegerField()
+    total_cost = models.DecimalField(max_digits=6, decimal_places=2)
     status = models.CharField(max_length=20, choices=[('Booked', 'Booked'), ('Cancelled', 'Cancelled')],
                               default='Booked')
-    created_at = models.DateTimeField(auto_now_add=True)  # When the reservations was made
-    updated_at = models.DateTimeField(auto_now=True)  # Last update to the reservations
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         # Round seats_count to the next even number if odd
-        if self.seats_count % 2 != 0:
-            self.seats_count += 1
-        # Calculate total cost based on the number of seats reserved
-        self.total_cost = self.seats_count * self.table.price_per_seat
-        # Update table's occupied_seats
+        self.total_cost = (self.table.seats_count - 1) * self.table.price_per_seat
         self.table.occupied_seats += self.seats_count
         self.table.save()
         super().save(*args, **kwargs)
@@ -58,3 +44,11 @@ class Reservation(models.Model):
         self.table.occupied_seats -= self.seats_count  # Free up the seats
         self.table.save()
         self.save()
+
+    @staticmethod
+    def find_closest_table(seats_count):
+        tables = Table.objects.filter(
+            seats_count__gte=seats_count,
+            occupied_seats__lt=models.F('seats_count')
+            ).order_by('seats_count')
+        return tables.first() if tables else None
