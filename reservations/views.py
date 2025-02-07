@@ -1,7 +1,8 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
@@ -30,7 +31,7 @@ class TableViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ordering_fields = ['seats_count', 'price_per_seat']
 
 
-class ReservationViewSet(ModelViewSet):
+class ReservationViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
     serializer_class = ReservationCreateSerializer
     permission_classes = [IsAuthenticated]
 
@@ -40,6 +41,7 @@ class ReservationViewSet(ModelViewSet):
     def get_queryset(self):
         return Reservation.objects.filter(user=self.request.user)
 
+    @swagger_auto_schema(operation_description="List all reservations")
     def list(self, request, *args, **kwargs):
         """
         list all reservations
@@ -48,6 +50,7 @@ class ReservationViewSet(ModelViewSet):
         serializer = ReservationSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(operation_description="Book some seats")
     def create(self, request, *args, **kwargs):
         """
         book some seats
@@ -77,6 +80,7 @@ class ReservationViewSet(ModelViewSet):
         return Response({'error': 'No available table found for the requested seats count.'},
                         status=status.HTTP_404_NOT_FOUND)
 
+    @swagger_auto_schema(operation_description="Cancel a reservation")
     def update(self, request, *args, **kwargs):
         """
         Cancel a reservation with specific id
