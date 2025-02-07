@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 
 class Table(models.Model):
@@ -29,13 +30,6 @@ class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        # Round seats_count to the next even number if odd
-        self.total_cost = (self.table.seats_count - 1) * self.table.price_per_seat
-        self.table.occupied_seats += self.seats_count
-        self.table.save()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"Reservation for {self.user.username} at Table {self.table.id} ({self.seats_count} seats)"
 
@@ -47,8 +41,12 @@ class Reservation(models.Model):
 
     @staticmethod
     def find_closest_table(seats_count):
-        tables = Table.objects.filter(
-            seats_count__gte=seats_count,
-            occupied_seats__lt=models.F('seats_count')
-            ).order_by('seats_count')
+        # First, try to find tables with exactly the requested seats_count
+        tables = Table.objects.filter(seats_count=seats_count, occupied_seats=0).order_by('price_per_seat')
+        if not tables.exists():
+            # If no exact match is found, look for tables with greater or equal seats_count
+            tables = Table.objects.filter(
+                seats_count__gte=seats_count,
+                occupied_seats__lte=models.F('seats_count') - seats_count
+            ).order_by('price_per_seat')
         return tables.first() if tables else None
