@@ -2,21 +2,6 @@
 
 ## Project Setup
 
-### Prerequisites
-
-Ensure you have the following installed on your machine:
-
-- Docker
-- Docker Compose
-
-### Docker
-
-This project uses Docker for containerization. Make sure you have Docker installed and running on your machine.
-
-### Docker Compose
-
-The project uses Docker Compose to manage multiple services, including the PostgreSQL database and Django application.
-
 ### Environment Variables
 
 The project uses a `.env` file to manage environment variables. Here is the structure of the `.env` file:
@@ -76,7 +61,23 @@ python manage.py runserver
 This will start the Django development server and make the application accessible at http://localhost:8000.
 
 
-### Build and run the Docker containers:  
+## Build and run the Docker containers:  
+
+### Prerequisites
+
+Ensure you have the following installed on your machine:
+
+- Docker
+- Docker Compose
+
+### Docker
+
+This project uses Docker for containerization. Make sure you have Docker installed and running on your machine.
+
+### Docker Compose
+
+The project uses Docker Compose to manage multiple services, including the PostgreSQL database and Django application.
+
 ```
 docker-compose up --build
 ```
