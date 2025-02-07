@@ -1,21 +1,24 @@
 from rest_framework import serializers
-from .models import Table, Seat, Reservation
+from .models import Table, Reservation
 from django.contrib.auth.models import User
 
 
-class SeatSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Seat
-        fields = ['id', 'table', 'seat_number', 'is_occupied', 'reservation']
-
-
 class TableSerializer(serializers.ModelSerializer):
-    seats = SeatSerializer(many=True, read_only=True)  # Nested seats info
     available_seats = serializers.ReadOnlyField()  # Method to show available seats
 
     class Meta:
         model = Table
-        fields = ['id', 'seats_count', 'occupied_seats', 'price_per_seat', 'available_seats', 'seats']
+        fields = ['id', 'seats_count', 'occupied_seats', 'price_per_seat', 'available_seats']
+
+
+class ReservationCreateSerializer(serializers.Serializer):
+    seats_count = serializers.IntegerField()
+
+    @staticmethod
+    def validate_seats_count(value):
+        if value % 2 != 0:
+            value += 1  # Round up to the next even number if odd
+        return value
 
 
 class ReservationSerializer(serializers.ModelSerializer):
@@ -27,18 +30,13 @@ class ReservationSerializer(serializers.ModelSerializer):
         model = Reservation
         fields = ['id', 'user', 'table', 'seats_count', 'total_cost', 'status', 'created_at', 'updated_at']
 
-    def validate_seats_count(self, value):
-        if value % 2 != 0:
-            raise serializers.ValidationError("The number of seats must be an even number.")
-        return value
-
-    def create(self, validated_data):
-        reservation = super().create(validated_data)
-        # Additional actions (like updating the table's occupied seats) can be done here.
-        return reservation
-
-    def update(self, instance, validated_data):
-        instance.seats_count = validated_data.get('seats_count', instance.seats_count)
-        instance.total_cost = instance.seats_count * instance.table.price_per_seat
-        instance.save()
-        return instance
+    # def create(self, validated_data):
+    #     reservation = super().create(validated_data)
+    #     # Additional actions (like updating the table's occupied seats) can be done here.
+    #     return reservation
+    #
+    # def update(self, instance, validated_data):
+    #     instance.seats_count = validated_data.get('seats_count', instance.seats_count)
+    #     instance.total_cost = instance.seats_count * instance.table.price_per_seat
+    #     instance.save()
+    #     return instance
