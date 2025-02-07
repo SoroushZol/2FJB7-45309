@@ -9,4 +9,6 @@ router.register('book', ReservationViewSet, basename='book')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('<int:pk>/cancel/', ReservationViewSet.as_view({'put': 'update'}), name='cancel'),
+
 ]
